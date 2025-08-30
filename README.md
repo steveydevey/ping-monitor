@@ -33,13 +33,41 @@ The `bad.png` screenshot (located in `screenshots/bad.png`) shows a situation wh
 
 ## Getting Started
 
-To recreate this dashboard using Grafana and Prometheus:
-
+### Quick Start
 1. Ensure you have Docker installed and running on your system.
-2. Run `docker-compose up -d` from this directory.
-3. Open [http://localhost:3000/d/cdwor2stprugwd/ping?orgId=1](http://localhost:3000/d/cdwor2stprugwd/ping?orgId=1) to view the dashboard.
+2. Run the setup script: `./setup-monitoring.sh`
+3. Access the dashboards:
+   - **Original Dashboard**: [http://localhost:3000/d/cdwor2stprugwd/ping](http://localhost:3000/d/cdwor2stprugwd/ping)
+   - **Enhanced Dashboard**: [http://localhost:3000/d/enhanced-monitoring/enhanced-network-monitoring](http://localhost:3000/d/enhanced-monitoring/enhanced-network-monitoring)
 
-Run `docker-compose down` to stop the containers when you're done. You can also clean up the volumes by running `docker-compose down -v`.
+### Manual Setup
+1. Validate configuration: `./validate-config.sh`
+2. Start services: `docker-compose up -d`
+3. Stop services: `docker-compose down`
+4. Clean up volumes: `docker-compose down -v`
+
+## Enhanced Features
+
+### Monitoring Targets
+- **ICMP (Ping)**: 8.8.8.8, 1.1.1.1, 192.168.254.254, 192.168.254.9, nas.lan, r630.lan
+- **HTTP**: https://home.jomby.xyz, https://google.com, https://github.com
+- **DNS**: nas.lan, r630.lan, home.jomby.xyz
+- **SSL Certificates**: HTTPS endpoints with expiry monitoring
+- **TCP Ports**: SSH and HTTP ports on local servers
+
+### Alerting Rules
+- Network connectivity failures
+- High latency warnings
+- Packet loss detection
+- HTTP service failures
+- SSL certificate expiry warnings
+- Local infrastructure issues
+
+### Documentation
+- **[MONITORING_RULES.md](MONITORING_RULES.md)**: Comprehensive monitoring rules and best practices
+- **[EXPANSION_PLAN.md](EXPANSION_PLAN.md)**: Roadmap for future enhancements
+- **[QUERIES_AND_EXAMPLES.md](QUERIES_AND_EXAMPLES.md)**: Useful Prometheus queries and examples
+- **[IMPROVEMENT_SUGGESTIONS.md](IMPROVEMENT_SUGGESTIONS.md)**: Additional improvement ideas and implementation guidance
 
 ## License
 

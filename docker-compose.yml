@@ -4,6 +4,8 @@ services:
     container_name: prometheus
     volumes:
       - ./prometheus.yml:/etc/prometheus/prometheus.yml
+      - ./prometheus-rules.yml:/etc/prometheus/prometheus-rules.yml
+      - ./prometheus-recording-rules.yml:/etc/prometheus/prometheus-recording-rules.yml
       - prometheus-data:/prometheus
     ports:
       - "9090:9090"
@@ -25,8 +27,12 @@ services:
   blackbox_exporter:
     image: prom/blackbox-exporter:latest
     container_name: blackbox_exporter
+    volumes:
+      - ./blackbox.yml:/etc/blackbox_exporter/config.yml
     ports:
       - "9115:9115"
+    command:
+      - '--config.file=/etc/blackbox_exporter/config.yml'
 
 volumes:
   prometheus-data:

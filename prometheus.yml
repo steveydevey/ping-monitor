@@ -1,6 +1,10 @@
 global:
   scrape_interval: 15s
 
+rule_files:
+  - "prometheus-rules.yml"
+  - "prometheus-recording-rules.yml"
+
 scrape_configs:
   - job_name: 'blackbox'
     metrics_path: /probe
@@ -8,13 +12,87 @@ scrape_configs:
       module: [icmp]
     static_configs:
       - targets:
-        - 8.8.8.8  # Replace with your target IP or domain
-        - 1.1.1.1  # Another target for Ping
+        - 8.8.8.8  # Google DNS
+        - 1.1.1.1  # Cloudflare DNS
+        - 192.168.254.254  # Local network gateway/router
+        - 192.168.254.9   # Local network device
+        - nas.lan         # Network Attached Storage
+        - r630.lan        # Dell R630 server
     relabel_configs:
       - source_labels: [__address__]
         target_label: __param_target
       - target_label: instance
         replacement: blackbox
+      - target_label: __address__
+        replacement: blackbox_exporter:9115
+
+  - job_name: 'blackbox_http'
+    metrics_path: /probe
+    params:
+      module: [http_2xx]
+    static_configs:
+      - targets:
+        - https://home.jomby.xyz
+        - https://google.com
+        - https://github.com
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: __param_target
+      - source_labels: [__param_target]
+        target_label: instance
+      - target_label: __address__
+        replacement: blackbox_exporter:9115
+
+  - job_name: 'blackbox_dns'
+    metrics_path: /probe
+    params:
+      module: [dns]
+    static_configs:
+      - targets:
+        - nas.lan
+        - r630.lan
+        - home.jomby.xyz
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: __param_target
+      - source_labels: [__param_target]
+        target_label: instance
+      - target_label: __address__
+        replacement: blackbox_exporter:9115
+
+  - job_name: 'blackbox_ssl'
+    metrics_path: /probe
+    params:
+      module: [http_ssl]
+    static_configs:
+      - targets:
+        - https://home.jomby.xyz
+        - https://github.com
+        - https://google.com
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: __param_target
+      - source_labels: [__param_target]
+        target_label: instance
+      - target_label: __address__
+        replacement: blackbox_exporter:9115
+
+  - job_name: 'blackbox_tcp'
+    metrics_path: /probe
+    params:
+      module: [tcp_connect]
+    static_configs:
+      - targets:
+        - r630.lan:22    # SSH
+        - r630.lan:80    # HTTP
+        - nas.lan:80     # HTTP
+        - nas.lan:443    # HTTPS
+        - nas.lan:22     # SSH
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: __param_target
+      - source_labels: [__param_target]
+        target_label: instance
       - target_label: __address__
         replacement: blackbox_exporter:9115
 
