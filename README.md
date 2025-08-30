@@ -33,12 +33,26 @@ The `bad.png` screenshot (located in `screenshots/bad.png`) shows a situation wh
 
 ## Getting Started
 
+### Port Configuration
+The monitoring stack uses configurable ports to avoid conflicts. By default:
+- **Grafana**: Port 3007 (instead of standard 3000)
+- **Prometheus**: Port 9097 (instead of standard 9090)
+
+You can customize these ports by editing the `.env` file:
+```bash
+# Copy the example file and edit as needed
+cp .env.example .env
+# Edit .env file to change ports
+PROMETHEUS_PORT=9097
+GRAFANA_PORT=3007
+```
+
 ### Quick Start
 1. Ensure you have Docker installed and running on your system.
 2. Run the setup script: `./setup-monitoring.sh`
-3. Access the dashboards:
-   - **Original Dashboard**: [http://localhost:3000/d/cdwor2stprugwd/ping](http://localhost:3000/d/cdwor2stprugwd/ping)
-   - **Enhanced Dashboard**: [http://localhost:3000/d/enhanced-monitoring/enhanced-network-monitoring](http://localhost:3000/d/enhanced-monitoring/enhanced-network-monitoring)
+3. Access the dashboards (ports will be shown in the setup output):
+   - **Original Dashboard**: http://localhost:3007/d/cdwor2stprugwd/ping
+   - **Enhanced Dashboard**: http://localhost:3007/d/enhanced-monitoring/enhanced-network-monitoring
 
 ### Manual Setup
 1. Validate configuration: `./validate-config.sh`

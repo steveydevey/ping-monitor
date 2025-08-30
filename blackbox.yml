@@ -17,7 +17,7 @@ modules:
       method: GET
       headers:
         User-Agent: "Prometheus-Blackbox-Exporter/1.0"
-      no_follow_redirects: false
+      follow_redirects: true
       fail_if_ssl: false
       fail_if_not_ssl: false
       tls_config:
@@ -54,7 +54,7 @@ modules:
       method: GET
       headers:
         User-Agent: "Prometheus-Blackbox-Exporter/1.0"
-      no_follow_redirects: false
+      follow_redirects: true
       fail_if_ssl: false
       fail_if_not_ssl: true
       tls_config:

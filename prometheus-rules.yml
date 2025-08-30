@@ -27,7 +27,7 @@ groups:
           severity: warning
         annotations:
           summary: "Packet loss detected to {{ $labels.instance }}"
-          description: "Packet loss to {{ $labels.instance }} is {{ printf \"%.2f\" (1 - $value) }}% over the last 5 minutes."
+          description: "Packet loss to {{ $labels.instance }} is above 5% over the last 5 minutes (success rate: {{ $value }})"
       
       # HTTP Alerts
       - alert: HTTPServiceDown
@@ -75,7 +75,7 @@ groups:
           severity: warning
         annotations:
           summary: "SSL certificate for {{ $labels.instance }} expires soon"
-          description: "SSL certificate for {{ $labels.instance }} expires in {{ printf \"%.0f\" (($value - time()) / 86400) }} days."
+          description: "SSL certificate for {{ $labels.instance }} expires within 30 days (expiry timestamp: {{ $value }})"
       
       - alert: SSLCertificateExpired
         expr: probe_ssl_earliest_cert_expiry{job="blackbox_http"} - time() <= 0

@@ -110,13 +110,18 @@ docker-compose up -d
 ```
 
 ### Access Points
-- **Grafana**: http://localhost:3000 (admin/admin)
-- **Prometheus**: http://localhost:9090
+- **Grafana**: http://localhost:3007 (admin/admin) - *Configurable via .env*
+- **Prometheus**: http://localhost:9097 - *Configurable via .env*
 - **Blackbox Exporter**: http://localhost:9115
 
 ### Dashboard URLs
-- **Original**: http://localhost:3000/d/cdwor2stprugwd/ping
-- **Enhanced**: http://localhost:3000/d/enhanced-monitoring/enhanced-network-monitoring
+- **Original**: http://localhost:3007/d/cdwor2stprugwd/ping
+- **Enhanced**: http://localhost:3007/d/enhanced-monitoring/enhanced-network-monitoring
+
+### Port Configuration
+The monitoring stack uses non-standard ports by default to avoid conflicts:
+- Grafana: 3007 (configurable via `GRAFANA_PORT` in .env)
+- Prometheus: 9097 (configurable via `PROMETHEUS_PORT` in .env)
 
 ## 📊 Monitoring Capabilities
 

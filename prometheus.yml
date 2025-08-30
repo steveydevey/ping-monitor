@@ -33,7 +33,23 @@ scrape_configs:
     static_configs:
       - targets:
         - https://home.jomby.xyz
-        - https://google.com
+        - http://nas.lan:9090
+        - http://r630.lan:9090
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: __param_target
+      - source_labels: [__param_target]
+        target_label: instance
+      - target_label: __address__
+        replacement: blackbox_exporter:9115
+
+  - job_name: 'blackbox_http_redirects'
+    metrics_path: /probe
+    params:
+      module: [http_2xx]
+    static_configs:
+      - targets:
+        - https://httpbin.org/status/200
         - https://github.com
     relabel_configs:
       - source_labels: [__address__]
@@ -49,9 +65,7 @@ scrape_configs:
       module: [dns]
     static_configs:
       - targets:
-        - nas.lan
-        - r630.lan
-        - home.jomby.xyz
+        - 192.168.254.11
     relabel_configs:
       - source_labels: [__address__]
         target_label: __param_target
@@ -68,7 +82,7 @@ scrape_configs:
       - targets:
         - https://home.jomby.xyz
         - https://github.com
-        - https://google.com
+        - https://httpbin.org/status/200
     relabel_configs:
       - source_labels: [__address__]
         target_label: __param_target
@@ -84,8 +98,8 @@ scrape_configs:
     static_configs:
       - targets:
         - r630.lan:22    # SSH
-        - r630.lan:80    # HTTP
-        - nas.lan:80     # HTTP
+        - r630.lan:9090  # Cockpit
+        - nas.lan:9090   # Cockpit
         - nas.lan:443    # HTTPS
         - nas.lan:22     # SSH
     relabel_configs:

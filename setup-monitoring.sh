@@ -5,6 +5,15 @@
 
 set -e
 
+# Load environment variables
+if [ -f .env ]; then
+    export $(cat .env | grep -v '^#' | xargs)
+fi
+
+# Set defaults if not provided
+PROMETHEUS_PORT=${PROMETHEUS_PORT:-9097}
+GRAFANA_PORT=${GRAFANA_PORT:-3007}
+
 echo "🚀 Setting up Enhanced Network Monitoring..."
 
 # Check if Docker is running
@@ -35,6 +44,15 @@ done
 
 echo "✅ All configuration files found"
 
+# Generate configuration files from templates
+echo "🔧 Generating configuration files..."
+if [ -f generate-configs.sh ]; then
+    ./generate-configs.sh
+    echo "✅ Configuration files generated"
+else
+    echo "⚠️  generate-configs.sh not found, using existing configuration files"
+fi
+
 # Stop existing containers
 echo "🛑 Stopping existing containers..."
 docker-compose down -v
@@ -51,7 +69,7 @@ sleep 30
 echo "🔍 Validating services..."
 
 # Check Prometheus
-if curl -s http://localhost:9090/-/healthy > /dev/null; then
+if curl -s http://localhost:$PROMETHEUS_PORT/-/healthy > /dev/null; then
     echo "✅ Prometheus is healthy"
 else
     echo "❌ Prometheus health check failed"
@@ -67,7 +85,7 @@ else
 fi
 
 # Check Grafana
-if curl -s http://localhost:3000/api/health > /dev/null; then
+if curl -s http://localhost:$GRAFANA_PORT/api/health > /dev/null; then
     echo "✅ Grafana is healthy"
 else
     echo "❌ Grafana health check failed"
@@ -93,7 +111,7 @@ fi
 
 # Check Prometheus targets
 echo "📊 Checking Prometheus targets..."
-if curl -s http://localhost:9090/api/v1/targets | grep -q "blackbox"; then
+if curl -s http://localhost:$PROMETHEUS_PORT/api/v1/targets | grep -q "blackbox"; then
     echo "✅ Prometheus is scraping blackbox targets"
 else
     echo "❌ Prometheus targets not configured correctly"
@@ -104,10 +122,10 @@ echo ""
 echo "🎉 Enhanced Network Monitoring setup complete!"
 echo ""
 echo "📊 Access your dashboards:"
-echo "   • Grafana: http://localhost:3000"
-echo "   • Original Dashboard: http://localhost:3000/d/cdwor2stprugwd/ping"
-echo "   • Enhanced Dashboard: http://localhost:3000/d/enhanced-monitoring/enhanced-network-monitoring"
-echo "   • Prometheus: http://localhost:9090"
+echo "   • Grafana: http://localhost:$GRAFANA_PORT"
+echo "   • Original Dashboard: http://localhost:$GRAFANA_PORT/d/cdwor2stprugwd/ping"
+echo "   • Enhanced Dashboard: http://localhost:$GRAFANA_PORT/d/enhanced-monitoring/enhanced-network-monitoring"
+echo "   • Prometheus: http://localhost:$PROMETHEUS_PORT"
 echo "   • Blackbox Exporter: http://localhost:9115"
 echo ""
 echo "🔧 Monitoring Targets:"

@@ -193,11 +193,11 @@ Consider adding SNMP exporter for detailed network device metrics:
 # Check blackbox exporter status
 curl http://localhost:9115/probe?target=8.8.8.8&module=icmp
 
-# Check prometheus targets
-curl http://localhost:9090/api/v1/targets
+# Check prometheus targets (default port 9097)
+curl http://localhost:9097/api/v1/targets
 
-# Check prometheus rules
-curl http://localhost:9090/api/v1/rules
+# Check prometheus rules (default port 9097)
+curl http://localhost:9097/api/v1/rules
 ```
 
 ## Performance Optimization
