@@ -1,0 +1,117 @@
+groups:
+  - name: network_monitoring
+    rules:
+      # Ping/ICMP Alerts
+      - alert: HostDown
+        expr: probe_success{job="blackbox"} == 0
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Host {{ $labels.instance }} is down"
+          description: "Host {{ $labels.instance }} has been down for more than 2 minutes."
+      
+      - alert: HighPingLatency
+        expr: probe_icmp_duration_seconds{job="blackbox"} > 0.1
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High ping latency to {{ $labels.instance }}"
+          description: "Ping latency to {{ $labels.instance }} is {{ $value }}s (>100ms) for more than 5 minutes."
+      
+      - alert: PingPacketLoss
+        expr: avg_over_time(probe_success{job="blackbox"}[5m]) < 0.95
+        for: 3m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Packet loss detected to {{ $labels.instance }}"
+          description: "Packet loss to {{ $labels.instance }} is {{ printf \"%.2f\" (1 - $value) }}% over the last 5 minutes."
+      
+      # HTTP Alerts
+      - alert: HTTPServiceDown
+        expr: probe_success{job="blackbox_http"} == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "HTTP service {{ $labels.instance }} is down"
+          description: "HTTP service {{ $labels.instance }} has been down for more than 1 minute."
+      
+      - alert: HTTPHighResponseTime
+        expr: probe_http_duration_seconds{job="blackbox_http"} > 5
+        for: 3m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High HTTP response time for {{ $labels.instance }}"
+          description: "HTTP response time for {{ $labels.instance }} is {{ $value }}s (>5s) for more than 3 minutes."
+      
+      - alert: HTTPStatusCodeError
+        expr: probe_http_status_code{job="blackbox_http"} >= 400
+        for: 1m
+        labels:
+          severity: warning
+        annotations:
+          summary: "HTTP error status code for {{ $labels.instance }}"
+          description: "HTTP service {{ $labels.instance }} returned status code {{ $value }} for more than 1 minute."
+      
+      # DNS Alerts
+      - alert: DNSLookupSlow
+        expr: probe_dns_lookup_time_seconds > 1
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Slow DNS lookup for {{ $labels.instance }}"
+          description: "DNS lookup for {{ $labels.instance }} is taking {{ $value }}s (>1s) for more than 2 minutes."
+      
+      # Certificate Expiry (if SSL monitoring is enabled)
+      - alert: SSLCertificateExpiringSoon
+        expr: probe_ssl_earliest_cert_expiry{job="blackbox_http"} - time() < 86400 * 30
+        for: 1h
+        labels:
+          severity: warning
+        annotations:
+          summary: "SSL certificate for {{ $labels.instance }} expires soon"
+          description: "SSL certificate for {{ $labels.instance }} expires in {{ printf \"%.0f\" (($value - time()) / 86400) }} days."
+      
+      - alert: SSLCertificateExpired
+        expr: probe_ssl_earliest_cert_expiry{job="blackbox_http"} - time() <= 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "SSL certificate for {{ $labels.instance }} has expired"
+          description: "SSL certificate for {{ $labels.instance }} has expired."
+
+  - name: infrastructure_monitoring
+    rules:
+      # Local Network Infrastructure
+      - alert: LocalGatewayDown
+        expr: probe_success{instance="192.168.254.254"} == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Local network gateway is down"
+          description: "Cannot reach local network gateway (192.168.254.254). This may indicate a network infrastructure issue."
+      
+      - alert: NASUnreachable
+        expr: probe_success{instance="nas.lan"} == 0
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "NAS is unreachable"
+          description: "Network Attached Storage (nas.lan) has been unreachable for more than 2 minutes."
+      
+      - alert: ServerUnreachable
+        expr: probe_success{instance="r630.lan"} == 0
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "R630 server is unreachable"
+          description: "Dell R630 server (r630.lan) has been unreachable for more than 2 minutes."

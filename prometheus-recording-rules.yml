@@ -1,0 +1,84 @@
+groups:
+  - name: network_recording_rules
+    interval: 30s
+    rules:
+      # ICMP Success Rates
+      - record: ping:success_rate_5m
+        expr: avg_over_time(probe_success{job="blackbox"}[5m])
+        labels:
+          rule_type: "success_rate"
+      
+      - record: ping:success_rate_1h
+        expr: avg_over_time(probe_success{job="blackbox"}[1h])
+        labels:
+          rule_type: "success_rate"
+      
+      - record: ping:success_rate_24h
+        expr: avg_over_time(probe_success{job="blackbox"}[24h])
+        labels:
+          rule_type: "success_rate"
+      
+      # ICMP Latency Metrics
+      - record: ping:avg_latency_5m
+        expr: avg_over_time(probe_icmp_duration_seconds{job="blackbox"}[5m])
+        labels:
+          rule_type: "latency"
+      
+      - record: ping:p95_latency_5m
+        expr: quantile_over_time(0.95, probe_icmp_duration_seconds{job="blackbox"}[5m])
+        labels:
+          rule_type: "latency"
+      
+      - record: ping:max_latency_5m
+        expr: max_over_time(probe_icmp_duration_seconds{job="blackbox"}[5m])
+        labels:
+          rule_type: "latency"
+      
+      # HTTP Success Rates
+      - record: http:success_rate_5m
+        expr: avg_over_time(probe_success{job="blackbox_http"}[5m])
+        labels:
+          rule_type: "success_rate"
+      
+      - record: http:success_rate_1h
+        expr: avg_over_time(probe_success{job="blackbox_http"}[1h])
+        labels:
+          rule_type: "success_rate"
+      
+      # HTTP Response Times
+      - record: http:avg_response_time_5m
+        expr: avg_over_time(probe_http_duration_seconds{job="blackbox_http"}[5m])
+        labels:
+          rule_type: "response_time"
+      
+      - record: http:p95_response_time_5m
+        expr: quantile_over_time(0.95, probe_http_duration_seconds{job="blackbox_http"}[5m])
+        labels:
+          rule_type: "response_time"
+      
+      # Network Health Scores
+      - record: network:local_health_score
+        expr: avg(probe_success{instance=~"192\\.168\\..*|.*\\.lan"})
+        labels:
+          network_type: "local"
+      
+      - record: network:external_health_score
+        expr: avg(probe_success{instance=~"8\\.8\\.8\\.8|1\\.1\\.1\\.1|.*\\.com|.*\\.xyz"})
+        labels:
+          network_type: "external"
+      
+      - record: network:overall_health_score
+        expr: avg(probe_success)
+        labels:
+          network_type: "overall"
+      
+      # Packet Loss Calculations
+      - record: ping:packet_loss_5m
+        expr: 1 - avg_over_time(probe_success{job="blackbox"}[5m])
+        labels:
+          rule_type: "packet_loss"
+      
+      - record: ping:packet_loss_1h
+        expr: 1 - avg_over_time(probe_success{job="blackbox"}[1h])
+        labels:
+          rule_type: "packet_loss"
