@@ -2,17 +2,17 @@ groups:
   - name: network_monitoring
     rules:
       # Ping/ICMP Alerts
-      - alert: HostDown
-        expr: probe_success{job="blackbox"} == 0
+      - alert: PingConnectivityDown
+        expr: probe_success{job="ping_connectivity_monitoring"} == 0
         for: 2m
         labels:
           severity: critical
         annotations:
-          summary: "Host {{ $labels.instance }} is down"
-          description: "Host {{ $labels.instance }} has been down for more than 2 minutes."
+          summary: "Ping connectivity to {{ $labels.instance }} is down"
+          description: "Cannot ping {{ $labels.instance }} for more than 2 minutes. This may indicate network connectivity issues."
       
       - alert: HighPingLatency
-        expr: probe_icmp_duration_seconds{job="blackbox"} > 0.1
+        expr: probe_icmp_duration_seconds{job="ping_connectivity_monitoring"} > 0.1
         for: 5m
         labels:
           severity: warning
@@ -21,7 +21,7 @@ groups:
           description: "Ping latency to {{ $labels.instance }} is {{ $value }}s (>100ms) for more than 5 minutes."
       
       - alert: PingPacketLoss
-        expr: avg_over_time(probe_success{job="blackbox"}[5m]) < 0.95
+        expr: avg_over_time(probe_success{job="ping_connectivity_monitoring"}[5m]) < 0.95
         for: 3m
         labels:
           severity: warning
@@ -29,18 +29,27 @@ groups:
           summary: "Packet loss detected to {{ $labels.instance }}"
           description: "Packet loss to {{ $labels.instance }} is above 5% over the last 5 minutes (success rate: {{ $value }})"
       
-      # HTTP Alerts
-      - alert: HTTPServiceDown
-        expr: probe_success{job="blackbox_http"} == 0
+      # HTTP Service Alerts
+      - alert: LocalHTTPServiceDown
+        expr: probe_success{job="http_service_monitoring"} == 0
         for: 1m
         labels:
           severity: critical
         annotations:
-          summary: "HTTP service {{ $labels.instance }} is down"
-          description: "HTTP service {{ $labels.instance }} has been down for more than 1 minute."
+          summary: "Local HTTP service {{ $labels.instance }} is down"
+          description: "Local HTTP service {{ $labels.instance }} has been down for more than 1 minute."
+      
+      - alert: ExternalHTTPConnectivityDown
+        expr: probe_success{job="external_http_connectivity"} == 0
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "External HTTP connectivity to {{ $labels.instance }} is down"
+          description: "Cannot reach external HTTP service {{ $labels.instance }} for more than 2 minutes."
       
       - alert: HTTPHighResponseTime
-        expr: probe_http_duration_seconds{job="blackbox_http"} > 5
+        expr: probe_http_duration_seconds{job=~"http_service_monitoring|external_http_connectivity"} > 5
         for: 3m
         labels:
           severity: warning
@@ -49,7 +58,7 @@ groups:
           description: "HTTP response time for {{ $labels.instance }} is {{ $value }}s (>5s) for more than 3 minutes."
       
       - alert: HTTPStatusCodeError
-        expr: probe_http_status_code{job="blackbox_http"} >= 400
+        expr: probe_http_status_code{job=~"http_service_monitoring|external_http_connectivity"} >= 400
         for: 1m
         labels:
           severity: warning
@@ -58,18 +67,27 @@ groups:
           description: "HTTP service {{ $labels.instance }} returned status code {{ $value }} for more than 1 minute."
       
       # DNS Alerts
-      - alert: DNSLookupSlow
-        expr: probe_dns_lookup_time_seconds > 1
+      - alert: DNSResolutionSlow
+        expr: probe_dns_lookup_time_seconds{job="dns_resolution_monitoring"} > 1
         for: 2m
         labels:
           severity: warning
         annotations:
-          summary: "Slow DNS lookup for {{ $labels.instance }}"
-          description: "DNS lookup for {{ $labels.instance }} is taking {{ $value }}s (>1s) for more than 2 minutes."
+          summary: "Slow DNS resolution for {{ $labels.instance }}"
+          description: "DNS resolution for {{ $labels.instance }} is taking {{ $value }}s (>1s) for more than 2 minutes."
       
-      # Certificate Expiry (if SSL monitoring is enabled)
+      - alert: DNSResolutionDown
+        expr: probe_success{job="dns_resolution_monitoring"} == 0
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "DNS resolution service {{ $labels.instance }} is down"
+          description: "DNS resolution service {{ $labels.instance }} has been down for more than 2 minutes."
+      
+      # SSL Certificate Alerts
       - alert: SSLCertificateExpiringSoon
-        expr: probe_ssl_earliest_cert_expiry{job="blackbox_http"} - time() < 86400 * 30
+        expr: probe_ssl_earliest_cert_expiry{job="ssl_certificate_monitoring"} - time() < 86400 * 30
         for: 1h
         labels:
           severity: warning
@@ -78,19 +96,29 @@ groups:
           description: "SSL certificate for {{ $labels.instance }} expires within 30 days (expiry timestamp: {{ $value }})"
       
       - alert: SSLCertificateExpired
-        expr: probe_ssl_earliest_cert_expiry{job="blackbox_http"} - time() <= 0
+        expr: probe_ssl_earliest_cert_expiry{job="ssl_certificate_monitoring"} - time() <= 0
         for: 1m
         labels:
           severity: critical
         annotations:
           summary: "SSL certificate for {{ $labels.instance }} has expired"
           description: "SSL certificate for {{ $labels.instance }} has expired."
+      
+      # TCP Port Connectivity Alerts
+      - alert: TCPPortUnreachable
+        expr: probe_success{job="tcp_port_connectivity"} == 0
+        for: 1m
+        labels:
+          severity: warning
+        annotations:
+          summary: "TCP port {{ $labels.instance }} is unreachable"
+          description: "Cannot connect to TCP port {{ $labels.instance }} for more than 1 minute."
 
   - name: infrastructure_monitoring
     rules:
       # Local Network Infrastructure
       - alert: LocalGatewayDown
-        expr: probe_success{instance="192.168.254.254"} == 0
+        expr: probe_success{job="ping_connectivity_monitoring", instance="192.168.254.254"} == 0
         for: 1m
         labels:
           severity: critical
@@ -99,7 +127,7 @@ groups:
           description: "Cannot reach local network gateway (192.168.254.254). This may indicate a network infrastructure issue."
       
       - alert: NASUnreachable
-        expr: probe_success{instance="nas.lan"} == 0
+        expr: probe_success{job="ping_connectivity_monitoring", instance="nas.lan"} == 0
         for: 2m
         labels:
           severity: warning
@@ -108,10 +136,19 @@ groups:
           description: "Network Attached Storage (nas.lan) has been unreachable for more than 2 minutes."
       
       - alert: ServerUnreachable
-        expr: probe_success{instance="r630.lan"} == 0
+        expr: probe_success{job="ping_connectivity_monitoring", instance="r630.lan"} == 0
         for: 2m
         labels:
           severity: warning
         annotations:
           summary: "R630 server is unreachable"
           description: "Dell R630 server (r630.lan) has been unreachable for more than 2 minutes."
+      
+      - alert: LocalNetworkDeviceDown
+        expr: probe_success{job="ping_connectivity_monitoring", instance="192.168.254.9"} == 0
+        for: 3m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Local network device is unreachable"
+          description: "Local network device (192.168.254.9) has been unreachable for more than 3 minutes."

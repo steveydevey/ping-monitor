@@ -6,7 +6,7 @@ rule_files:
   - "prometheus-recording-rules.yml"
 
 scrape_configs:
-  - job_name: 'blackbox'
+  - job_name: 'ping_connectivity_monitoring'
     metrics_path: /probe
     params:
       module: [icmp]
@@ -21,12 +21,39 @@ scrape_configs:
     relabel_configs:
       - source_labels: [__address__]
         target_label: __param_target
-      - target_label: instance
-        replacement: blackbox
+      - source_labels: [__param_target]
+        target_label: instance
+      - target_label: service_type
+        replacement: ping
       - target_label: __address__
         replacement: blackbox_exporter:9115
+      # Add descriptive labels based on target
+      - source_labels: [__param_target]
+        regex: '8\.8\.8\.8'
+        target_label: target_type
+        replacement: 'external_dns'
+      - source_labels: [__param_target]
+        regex: '1\.1\.1\.1'
+        target_label: target_type
+        replacement: 'external_dns'
+      - source_labels: [__param_target]
+        regex: '192\.168\.254\.254'
+        target_label: target_type
+        replacement: 'local_gateway'
+      - source_labels: [__param_target]
+        regex: '192\.168\.254\.9'
+        target_label: target_type
+        replacement: 'local_device'
+      - source_labels: [__param_target]
+        regex: 'nas\.lan'
+        target_label: target_type
+        replacement: 'nas_storage'
+      - source_labels: [__param_target]
+        regex: 'r630\.lan'
+        target_label: target_type
+        replacement: 'dell_server'
 
-  - job_name: 'blackbox_http'
+  - job_name: 'http_service_monitoring'
     metrics_path: /probe
     params:
       module: [http_2xx]
@@ -40,10 +67,25 @@ scrape_configs:
         target_label: __param_target
       - source_labels: [__param_target]
         target_label: instance
+      - target_label: service_type
+        replacement: http
       - target_label: __address__
         replacement: blackbox_exporter:9115
+      # Add descriptive labels for HTTP services
+      - source_labels: [__param_target]
+        regex: 'https://home\.jomby\.xyz'
+        target_label: target_type
+        replacement: 'personal_website'
+      - source_labels: [__param_target]
+        regex: 'http://nas\.lan:9090'
+        target_label: target_type
+        replacement: 'nas_cockpit'
+      - source_labels: [__param_target]
+        regex: 'http://r630\.lan:9090'
+        target_label: target_type
+        replacement: 'server_cockpit'
 
-  - job_name: 'blackbox_http_redirects'
+  - job_name: 'external_http_connectivity'
     metrics_path: /probe
     params:
       module: [http_2xx]
@@ -56,25 +98,43 @@ scrape_configs:
         target_label: __param_target
       - source_labels: [__param_target]
         target_label: instance
+      - target_label: service_type
+        replacement: external_http
       - target_label: __address__
         replacement: blackbox_exporter:9115
+      # Add descriptive labels for external services
+      - source_labels: [__param_target]
+        regex: 'https://httpbin\.org/status/200'
+        target_label: target_type
+        replacement: 'test_service'
+      - source_labels: [__param_target]
+        regex: 'https://github\.com'
+        target_label: target_type
+        replacement: 'development_platform'
 
-  - job_name: 'blackbox_dns'
+  - job_name: 'dns_resolution_monitoring'
     metrics_path: /probe
     params:
       module: [dns]
     static_configs:
       - targets:
-        - 192.168.254.11
+        - 192.168.254.11  # Pi-hole DNS server
     relabel_configs:
       - source_labels: [__address__]
         target_label: __param_target
       - source_labels: [__param_target]
         target_label: instance
+      - target_label: service_type
+        replacement: dns
       - target_label: __address__
         replacement: blackbox_exporter:9115
+      # Add descriptive labels for DNS services
+      - source_labels: [__param_target]
+        regex: '192\.168\.254\.11'
+        target_label: target_type
+        replacement: 'pihole_dns'
 
-  - job_name: 'blackbox_ssl'
+  - job_name: 'ssl_certificate_monitoring'
     metrics_path: /probe
     params:
       module: [http_ssl]
@@ -88,10 +148,25 @@ scrape_configs:
         target_label: __param_target
       - source_labels: [__param_target]
         target_label: instance
+      - target_label: service_type
+        replacement: ssl
       - target_label: __address__
         replacement: blackbox_exporter:9115
+      # Add descriptive labels for SSL services
+      - source_labels: [__param_target]
+        regex: 'https://home\.jomby\.xyz'
+        target_label: target_type
+        replacement: 'personal_website_ssl'
+      - source_labels: [__param_target]
+        regex: 'https://github\.com'
+        target_label: target_type
+        replacement: 'development_platform_ssl'
+      - source_labels: [__param_target]
+        regex: 'https://httpbin\.org/status/200'
+        target_label: target_type
+        replacement: 'test_service_ssl'
 
-  - job_name: 'blackbox_tcp'
+  - job_name: 'tcp_port_connectivity'
     metrics_path: /probe
     params:
       module: [tcp_connect]
@@ -107,6 +182,29 @@ scrape_configs:
         target_label: __param_target
       - source_labels: [__param_target]
         target_label: instance
+      - target_label: service_type
+        replacement: tcp
       - target_label: __address__
         replacement: blackbox_exporter:9115
+      # Add descriptive labels for TCP services
+      - source_labels: [__param_target]
+        regex: 'r630\.lan:22'
+        target_label: target_type
+        replacement: 'server_ssh'
+      - source_labels: [__param_target]
+        regex: 'r630\.lan:9090'
+        target_label: target_type
+        replacement: 'server_cockpit_tcp'
+      - source_labels: [__param_target]
+        regex: 'nas\.lan:9090'
+        target_label: target_type
+        replacement: 'nas_cockpit_tcp'
+      - source_labels: [__param_target]
+        regex: 'nas\.lan:443'
+        target_label: target_type
+        replacement: 'nas_https'
+      - source_labels: [__param_target]
+        regex: 'nas\.lan:22'
+        target_label: target_type
+        replacement: 'nas_ssh'
 

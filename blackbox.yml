@@ -1,28 +1,31 @@
 modules:
+  # ICMP Ping Module - Basic network connectivity testing
   icmp:
     prober: icmp
     timeout: 5s
     icmp:
-      preferred_ip_protocol: "ip4"
-      source_ip_address: ""
-      payload_size: 56
-      dont_fragment: false
+      preferred_ip_protocol: "ip4"  # Use IPv4 for consistency
+      source_ip_address: ""         # Use default source IP
+      payload_size: 56              # Standard ICMP payload size
+      dont_fragment: false          # Allow packet fragmentation if needed
   
+  # HTTP 2xx Module - Standard HTTP service monitoring
   http_2xx:
     prober: http
     timeout: 5s
     http:
-      valid_http_versions: ["HTTP/1.1", "HTTP/2.0"]
-      valid_status_codes: []  # Defaults to 2xx
+      valid_http_versions: ["HTTP/1.1", "HTTP/2.0"]  # Support both HTTP versions
+      valid_status_codes: []  # Defaults to 2xx status codes (200-299)
       method: GET
       headers:
         User-Agent: "Prometheus-Blackbox-Exporter/1.0"
       follow_redirects: true
-      fail_if_ssl: false
-      fail_if_not_ssl: false
+      fail_if_ssl: false      # Don't fail if SSL is present
+      fail_if_not_ssl: false  # Don't fail if SSL is not present
       tls_config:
-        insecure_skip_verify: false
+        insecure_skip_verify: false  # Verify SSL certificates
   
+  # HTTP POST Module - For API endpoints that require POST requests
   http_post_2xx:
     prober: http
     timeout: 5s
@@ -30,49 +33,54 @@ modules:
       method: POST
       headers:
         Content-Type: "application/json"
-      body: '{}'
+      body: '{}'  # Empty JSON body for health checks
   
+  # TCP Connect Module - Basic TCP port connectivity testing
   tcp_connect:
     prober: tcp
     timeout: 5s
   
+  # DNS Resolution Module - DNS server functionality testing
   dns:
     prober: dns
     timeout: 5s
     dns:
-      query_name: "google.com"
-      query_type: "A"
+      query_name: "google.com"  # Test DNS resolution with a reliable domain
+      query_type: "A"           # Query for A records (IPv4 addresses)
       valid_rcodes:
-      - NOERROR
+      - NOERROR                 # Accept successful DNS responses
   
+  # HTTP SSL Module - HTTPS service monitoring with SSL certificate validation
   http_ssl:
     prober: http
-    timeout: 10s
+    timeout: 10s  # Longer timeout for SSL handshake
     http:
       valid_http_versions: ["HTTP/1.1", "HTTP/2.0"]
-      valid_status_codes: []
+      valid_status_codes: []  # Defaults to 2xx status codes
       method: GET
       headers:
         User-Agent: "Prometheus-Blackbox-Exporter/1.0"
       follow_redirects: true
-      fail_if_ssl: false
-      fail_if_not_ssl: true
+      fail_if_ssl: false      # Don't fail if SSL is present
+      fail_if_not_ssl: true   # Fail if SSL is not present (require HTTPS)
       tls_config:
-        insecure_skip_verify: false
+        insecure_skip_verify: false  # Verify SSL certificates
   
+  # TCP SSH Module - SSH service detection and validation
   tcp_ssh:
     prober: tcp
     timeout: 5s
     tcp:
       preferred_ip_protocol: "ip4"
       query_response:
-        - expect: "^SSH-2.0-"
+        - expect: "^SSH-2.0-"  # Expect SSH version string in response
   
+  # TCP HTTP Module - Basic HTTP service detection via TCP
   tcp_http:
     prober: tcp
     timeout: 5s
     tcp:
       preferred_ip_protocol: "ip4"
       query_response:
-        - send: "GET / HTTP/1.1\r\nHost: localhost\r\n\r\n"
-        - expect: "HTTP/1.1 200 OK"
+        - send: "GET / HTTP/1.1\r\nHost: localhost\r\n\r\n"  # Send HTTP request
+        - expect: "HTTP/1.1 200 OK"  # Expect successful HTTP response
